@@ -1,0 +1,173 @@
+SQL DATABASE - README & ERROR MESSAGES
+=======================
+
+Name: 		Helen Chac
+Name: 		Dehowe Feng
+Class: 		ECS 165B SQ 2016
+
+To compile: 
+Use the Makfile that is included in the project.
+On the terminal in the directory type in "make".
+
+To run:
+./professorParser
+
+Functionality from the project:
+- Statistics for tables.
+	-> Can be found in data/tables.stat
+	-> Indentation is ugly, but correct.
+	-> Did not implement DISTINCT VALUES for each indexed column.
+- WHERE clause: 
+	-> operations work. 
+	-> They need to have paranthesis in the correct areas (Order of operations).
+- Nested Loop Join
+	-> This function assumes that the column names of the tables will not collide.
+- GROUP BY
+	-> Group by works.
+	-> Example query:
+		select count(id) as b, name from student group by id;
+- ORDER BY
+	-> Works with only by sorting by one thing.
+	-> Example query:
+		select id from student order by id;
+- IN operation
+	-> Example query:
+		select id from student where id IN (select id from student);
+	-> If you want more operations in the WHERE:
+		select id from student where (id IN (select id from student)) AND (id IN (select id from student));
+- INSERT INTO operation
+	-> Example query:
+		insert into student values(9881840, "Helen");
+- CREATE TABLE operation
+	-> Example query:
+		create table student(id, name);
+		create table student(id key, name);
+
+Queries that work:
+- select count(id) as b from student group by id;
+- select count(id) as b, name from student group by id, name;
+- select id,name from student;
+- select id,name from student where id=2;
+- select id, name from student where (id < 2) AND (id =1); 
+- select id, name from student where id IN (select id from student);
+
+Errors: (TO SEE THESE, you must be in -d mode)
+=============================================
+Creation / Insertion
+--------------------
+- Checks to see if it's a B-Tree Index.
+	"DEBUG: tablename.columnname has B-Tree index"
+- Checks to see if that key already exists when inserting into the table.
+	"DEBUG: Key already exists."
+- Checks to see if it's a valid OP_CODE in the expression tree.
+	"Invalid OP_CODE in the expression tree -- need table_name"
+	"Invalid OP_CODE in the expression tree -- create/insert"
+- Checks to see if the table is valid name.
+	"Not valid Table name."
+- Checks to see if the table exists for both insert & create
+	"Error: Table already exists."
+- Checks to see if the column_names of table are valid in creating table.
+	"Error: Invalid column name"
+- Checks if there's enough memory to create the table.
+	"Error: Cannot create table. Not enough memory."
+- Other creation errors:
+	"Error: Unknown Server Error."
+- Checks the number of values to be inserted into the table.
+	"Error: Too few values."
+	"Error: Too many values."
+- Checks to see if the values entered are valid.
+	"Error: Invalid Data."
+- Other insertion errors:
+	"Error: Server Error."
+
+Loading the Database:
+- Checks to see if directory could be created if the data directory doesn't already exist.
+	"Could not create directory"
+- Show that the file could be read into memory (not an error.)
+	"DEBUG: Loading in file_name into database"
+- Show loading of the index files into memory (not an error.)
+	"DEBUG: Loading in table_name.col_name."
+
+Projection
+----------
+- Checks if the projection table exists, if it doesn't exist, it prints out:
+	"Table does not exist.\n";
+- When doing select, it checks the projection:
+	"Missing column names in the AS clause in the expression tree"
+	"Missing AS in the expression tree"
+- Added checks for when function codes aren't correct, just in case you see a
+	projection in a create table or something.
+
+Selection
+--------
+- Checks the OP_CODE.
+	"Function code does not match -- SELECTION"
+	"Missing table in the expression tree"
+- Checks to see if the table exists.
+	"Table does not exist"
+
+GROUP BY Operator
+-----------------
+- Added checks for when we can't find column names in GROUP BY.
+	"Could not find column name."
+- When doing function calls such as COUNT, SUM, AVG, MAX, MIN etc. Prints out error message if the expression tree is not correctly set up.
+- Checks if it's the right OP CODE in the expression tree:
+	"OP COLUMN IS NOT OF RLIST"
+	"OP COLUMN IS NOT OF SORTSPEC"
+	"Function code does not match - GROUP BY"
+	"Ordering not specified. Node in expression tree is NULL."
+	"There was an error in parsing out the group names."
+	"Foriegn OP_CODE in Groupby."
+- Checks to see if table exists
+	"Could not find table in Group by"
+
+Aggregate Functions
+-------------------
+- Checks if the OP Code is correct.
+	"OP CODE does not match -- FUNC"
+	"Operation code is not valid -- FuncCall"
+	"OPCODE is not correct -- FuncCall aggregate functions"
+- Checks to see if there is an column_name in the aggregate function exists.
+	--> Example: AVG(ID) -- checking if ID exists.
+	"Column name in the aggregate function does not exist."
+- If the aggregate function does not exist, we state that we did not implement the function.
+	"Did not implement this aggregate function"
+
+SORT Operator
+-------------
+- When sorting, it checks all the OP_CODES to make sure that the expression tree is correct
+	"Ordering not specified. Node in expression tree is NULL"
+	"OP CODE IS NOT OF TYPE RLIST"
+	"OP CODES IS NOT OF TYPE OP_SORTSPEC"
+	"OP CODE IS NOT OP COLNAME"
+- When sorting, checks whether or not the column is within that table.
+	"Could not find the column name in the table."
+
+IN Operator
+-----------
+- When doing IN, it checks whether the subquery was valid - it needs to return a 1d array.
+	"Invalid subquery in IN."
+- When doing IN, checks whether or not the column name exists inside that row.
+	"Column does not exist in IN."
+- Checks to see if the OP_CODES match.
+	"OP CODE IS NOT COLUMN NAME -- Checking IN."
+
+JOINING
+-------
+**NOTE: Joins only work as a Cartesian Product (A X B) where they don't have the same column names. This is done using the nested loop join.
+- Checks to see if the OP_CODEs match
+	"Went into the product function when op code is not product."
+	"Error in calculating JOIN-ing"
+	"OP Code's in Product is not TABLENAME"
+- Checks whether or not the database can find the table.
+	"Database could not find table."
+
+
+
+***THINGS THAT AREN'T IMPLEMENTED***
+====================================
+- Does not account for large tables (loads the tables in memory - passed around through references).
+- Operations on the projections, however operations in the selection's where clause works.
+- Sorting with more than one column name.
+- Did not implement part iii, or vi. 
+- For part ii, did not implement Hash Join or Index Join.
